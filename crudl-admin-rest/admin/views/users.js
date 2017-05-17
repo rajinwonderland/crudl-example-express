@@ -1,14 +1,20 @@
 import React from 'react'
 import SplitDateTimeField from '../fields/SplitDateTimeField'
 
+import { list, detail, options } from '../connectors'
+
+const users = list('users')
+const user = detail('users')
+
+
 //-------------------------------------------------------------------
 var listView = {
     path: 'users',
     title: 'Users',
     actions: {
         list: function (req) {
-            return crudl.connectors.users.read(req)
-            // return crudl.connectors.users.read(req.filter('id', crudl.auth.user))
+            return users.read(req)
+            // return users.read(req.filter('_id', crudl.auth.user))
         },
     },
     normalize: (list) => list.map(item => {
@@ -60,8 +66,8 @@ var changeView = {
     path: 'users/:_id',
     title: 'User',
     actions: {
-        get: function (req) { return crudl.connectors.user(crudl.path._id).read(req) },
-        save: function (req) { return crudl.connectors.user(crudl.path._id).update(req) },
+        get: function (req) { return user(crudl.path._id).read(req) },
+        save: function (req) { return user(crudl.path._id).update(req) },
     },
 }
 
@@ -171,7 +177,7 @@ var addView = {
     path: 'users/new',
     title: 'New User',
     actions: {
-        add: function (req) { return crudl.connectors.users.create(req) },
+        add: function (req) { return users.create(req) },
     },
 }
 
