@@ -1,6 +1,12 @@
 import { slugify, select } from '../utils'
 import React from 'react'
 
+import { list, detail, options } from '../connectors'
+
+const categories = list('categories');
+const category = detail('categories');
+const entries = list('entries');
+
 //-------------------------------------------------------------------
 var listView = {
     path: 'categories',
@@ -9,20 +15,17 @@ var listView = {
         /* counting the entries requires an additional API call per row. please note that the
         number of entries could be added at the database level, removing this additional call. */
         list: function (req) {
-            return crudl.connectors.categories.read(req)
+            return categories.read(req)
             .then(res => {
                 // The result of the following line is an array of promises, where each promise resolves
                 // to an array of entries associated with the item
-                let promises = res.data.map(item => crudl.connectors.entries.read(req.filter('category', item._id)))
+                let promises = res.map(item => entries.read(req.filter('category', item._id)))
                 // We return a single promise that synchronizes on all the promises created in the previous step
                 return Promise.all(promises)
-                // And we also need to return a correct response, so we transform
-                // the resolved results in the `then` method of the Promise.all promise
-                .then(item_entries => {
-                    return res.set('data', res.data.map((item, index) => {
-                        item.counter_entries = item_entries[index].data.length
-                        return item
-                    }))
+                // We create a new attribute called 'counter_entries'
+                .then((itemEntries) => {
+                    res.forEach((item, i) => Object.assign(item, { counter_entries: itemEntries[i].length}))
+                    return res
                 })
             })
 		}
@@ -74,7 +77,7 @@ listView.filters = {
             name: 'section',
             label: 'Section',
             field: 'Select',
-            lazy: () => crudl.connectors.sections_options.read(crudl.req()).then(res => res.data),
+            lazy: () => options('sections', '_id', 'name').read(crudl.req()),
             initialValue: '',
         },
     ]
@@ -85,9 +88,9 @@ var changeView = {
     path: 'categories/:_id',
     title: 'Category',
     actions: {
-        get: function (req) { return crudl.connectors.category(crudl.path._id).read(req) },
-        delete: function (req) { return crudl.connectors.category(crudl.path._id).delete(req) },
-        save: function (req) { return crudl.connectors.category(crudl.path._id).update(req) },
+        get: function (req) { return category(crudl.path._id).read(req) },
+        delete: function (req) { return category(crudl.path._id).delete(req) },
+        save: function (req) { return category(crudl.path._id).update(req) },
     },
 }
 
@@ -97,14 +100,7 @@ changeView.fields = [
         label: 'Section',
         field: 'Select',
         required: true,
-        lazy: () => crudl.connectors.sections_options.read(crudl.req()).then(res => res.data),
-        add: {
-            path: 'sections/new',
-            returnValue: data => data._id,
-        },
-        edit: {
-            path: () => `sections/${crudl.context('section')}`,
-        },
+        lazy: () => options('sections', '_id', 'name').read(crudl.req()),
     },
     {
         name: 'name',
@@ -131,7 +127,7 @@ var addView = {
     title: 'New Category',
     fields: changeView.fields,
     actions: {
-        add: function (req) { return crudl.connectors.categories.create(req) },
+        add: function (req) { return categories.create(req) },
     },
 }
 
