@@ -18,7 +18,6 @@ const OPTIONS = {
 var admin = {}
 admin.title = 'crudl.io Express GraphQL Example',
 admin.options = OPTIONS
-admin.connectors = connectors,
 admin.views = { users, sections, categories, tags, entries }
 admin.auth = { login, logout }
 admin.custom = { dashboard: CustomDashboard }

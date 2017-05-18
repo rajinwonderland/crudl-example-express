@@ -94,13 +94,6 @@ changeView.fields = [
         field: 'Select',
         required: true,
         lazy: () => crudl.connectors.sections_options.read(crudl.req()).then(res => res.data),
-        add: {
-            path: 'sections/new',
-            returnValue: data => data._id,
-        },
-        edit: {
-            path: () => `sections/${crudl.context('section')}`,
-        },
     },
     {
         name: 'name',

@@ -1,13 +1,15 @@
 import React from 'react'
 import SplitDateTimeField from '../fields/SplitDateTimeField'
 
+import { users } from '../connectors'
+
 //-------------------------------------------------------------------
 var listView = {
     path: 'users',
     title: 'Users',
     actions: {
         list: function (req) {
-            return crudl.connectors.users.read(req)
+            return users.read(req)
         },
     },
     normalize: (list) => list.map(item => {
