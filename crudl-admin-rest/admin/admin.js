@@ -9,7 +9,7 @@ var entries = require('./views/entries')
 var { login, logout } = require('./auth')
 
 const OPTIONS = {
-    debug: true,
+    debug: false,
     basePath: '/crudl-rest/',
     baseURL: '/rest-api/',
 }
