@@ -3,9 +3,11 @@ import React from 'react'
 
 import { list, detail, options } from '../connectors'
 
-const categories = list('categories');
-const category = detail('categories');
-const entries = list('entries');
+const categories = list('categories')
+const category = detail('categories')
+const entries = list('entries')
+const sections = list('sections')
+const section = detail('sections')
 
 //-------------------------------------------------------------------
 var listView = {
@@ -140,6 +142,57 @@ changeView.fields = [
         field: 'Select',
         required: true,
         lazy: () => options('sections', '_id', 'name').read(crudl.req()),
+        add: {
+            title: 'New section',
+            actions: {
+                add: req => sections.create(req).then(data => data._id),
+            },
+            fields: [
+                {
+                    name: 'name',
+                    label: 'Name',
+                    field: 'String',
+                    required: true
+                },
+                {
+                    name: 'slug',
+                    label: 'Slug',
+                    field: 'String',
+                    onChange: {
+                        in: 'name',
+                        setInitialValue: (name) => slugify(name.value),
+                    },
+                    helpText: <span>If left blank, the slug will be automatically generated.
+                    More about slugs <a href="http://en.wikipedia.org/wiki/Slug" target="_blank">here</a>.</span>,
+                },
+            ],
+        },
+        edit: {
+            title: 'Section',
+            actions: {
+                get: (req) => section(crudl.context('section')).read(req),
+                save: (req) => section(crudl.context('section')).update(req).then(data => data._id),
+            },
+            fields: [
+                {
+                    name: 'name',
+                    label: 'Name',
+                    field: 'String',
+                    required: true
+                },
+                {
+                    name: 'slug',
+                    label: 'Slug',
+                    field: 'String',
+                    onChange: {
+                        in: 'name',
+                        setInitialValue: (name) => slugify(name.value),
+                    },
+                    helpText: <span>If left blank, the slug will be automatically generated.
+                    More about slugs <a href="http://en.wikipedia.org/wiki/Slug" target="_blank">here</a>.</span>,
+                },
+            ],
+        },
     },
     {
         name: 'name',
