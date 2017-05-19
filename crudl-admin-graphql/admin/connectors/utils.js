@@ -42,3 +42,8 @@ export function resolveQuery(query, req) {
 
     return resolved
 }
+
+export function canResolveQuery(query, req) {
+    const paramNames = getParamNames(query)
+    return paramNames.length <= req.params.length
+}

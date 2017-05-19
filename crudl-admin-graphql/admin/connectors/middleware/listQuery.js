@@ -41,19 +41,25 @@ function buildQueryString(req, options) {
 
 const defaultArgs = { first: 20 };
 
-export default function createListQuery(options) {
-    const opts = Object.assign({}, options)
-    opts.args = Object.assign({}, defaultArgs, opts.args)
+export default function createListQuery(namePl, fields, args) {
+    const NamePl = namePl.charAt(0).toUpperCase() + namePl.slice(1);
+    const options = {
+        name: `all${NamePl}`,
+        fields,
+        args: Object.assign({}, defaultArgs, args)
+    }
 
     return function listQuery(next) {
         return {
             read: function (req) {
-                // Set the query
-                req.data = { query: buildQueryString(req, opts) }
+                if (req.resolved) {
+                    return next.read(req)
+                }
 
-                // Procede in the connector chain
-                return next.read(req)
-                .then((res) => {
+                // Build the query
+                req.data = { query: buildQueryString(req, options) }
+
+                return next.read(req).then((res) => {
                     res.data = res.data.data[options.name]
                     return res
                 })

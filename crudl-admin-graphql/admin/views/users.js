@@ -1,7 +1,10 @@
 import React from 'react'
 import SplitDateTimeField from '../fields/SplitDateTimeField'
 
-import { users } from '../connectors'
+import { createResourceConnector } from '../connectors'
+
+const userFields = '_id, username, first_name, last_name, email, is_active, is_staff, date_joined'
+const users = createResourceConnector('users', userFields)
 
 //-------------------------------------------------------------------
 var listView = {
@@ -61,8 +64,8 @@ var changeView = {
     path: 'users/:_id',
     title: 'User',
     actions: {
-        get: function (req) { return crudl.connectors.user(crudl.path._id).read(req) },
-        save: function (req) { return crudl.connectors.user(crudl.path._id).update(req) },
+        get: function (req) { return users(crudl.path._id).read(req) },
+        save: function (req) { return users(crudl.path._id).update(req) },
     },
     normalize: (get) => {
         let date = new Date(get.date_joined)

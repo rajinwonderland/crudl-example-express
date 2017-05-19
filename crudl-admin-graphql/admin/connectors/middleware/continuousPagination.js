@@ -14,9 +14,11 @@ function getInfo(data) {
 export default function continuousPagination(next) {
     return {
         read: req => next.read(req).then((res) => {
-            const paginationDescriptor = getInfo(res.data);
-            res.data = res.data.edges.map(edge => edge.node);
-            res.data.pagination = paginationDescriptor;
+            if (res.data.pageInfo) {
+                const paginationDescriptor = getInfo(res.data);
+                res.data = res.data.edges.map(edge => edge.node);
+                res.data.pagination = paginationDescriptor;
+            }
             return res;
         }),
     };
