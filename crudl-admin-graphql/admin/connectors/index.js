@@ -1,5 +1,5 @@
 import { createFrontendConnector, createBackendConnector } from 'crudl-connectors-base'
-import { crudToHttp, patternedURL, transformData } from 'crudl-connectors-base/lib/middleware'
+import { crudToHttp, url, transformData } from 'crudl-connectors-base/lib/middleware'
 
 import crudlErrors from './middleware/crudlErrors'
 import continuousPagination from './middleware/continuousPagination'
@@ -11,7 +11,7 @@ const baseURL = '/graphql-api/'
 
 function createGraphQLConnector() {
     return createFrontendConnector(createBackendConnector())
-        .use(patternedURL(baseURL))
+        .use(url(baseURL))
         .use(crudToHttp({ create: 'post', read: 'post', update: 'post', delete: 'post' }))
         .use(crudlErrors);
 }
@@ -24,7 +24,7 @@ export const users = createGraphQLConnector()
     .use(continuousPagination)
 
 export const login = createFrontendConnector(createBackendConnector())
-    .use(patternedURL('/rest-api/login/'))
+    .use(url('/rest-api/login/'))
     .use(crudToHttp())
     .use(crudlErrors)
     .use(transformData('create',

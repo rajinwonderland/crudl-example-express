@@ -1,5 +1,5 @@
 import { createFrontendConnector, createBackendConnector } from 'crudl-connectors-base'
-import { crudToHttp, patternedURL, transformData } from 'crudl-connectors-base/lib/middleware'
+import { crudToHttp, url, transformData } from 'crudl-connectors-base/lib/middleware'
 
 import crudlErrors from './middleware/crudlErrors'
 import numberedPagination from './middleware/numberedPagination'
@@ -7,11 +7,11 @@ import buildQuery from './middleware/buildQuery'
 
 const baseURL = '/rest-api/'
 
-function createExpressConnector(url) {
+function createExpressConnector(urlPath) {
   return createFrontendConnector(createBackendConnector({ baseURL, }))
     .use(buildQuery())
     .use(crudToHttp())
-    .use(patternedURL(url))
+    .use(url(urlPath))
     .use(crudlErrors);
 }
 
