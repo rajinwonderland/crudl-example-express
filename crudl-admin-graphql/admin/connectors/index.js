@@ -73,7 +73,7 @@ export function createResourceConnector(namePl, fields) {
 }
 
 /**
-* USAGE: const options = createOptionsConnector('section', '_id', 'name')
+* USAGE: const options = createOptionsConnector('sections', '_id', 'name')
 * options.read() // Resolves to { options: [ { value: '...', label: '...' }, { value: '...', label: '...' }, ...] }
 */
 export function createOptionsConnector(namePl, valueKey, labelKey) {
