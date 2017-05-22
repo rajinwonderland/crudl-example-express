@@ -85,7 +85,7 @@ export function createOptionsConnector(namePl, valueKey, labelKey) {
 export const login = createFrontendConnector(createBackendConnector())
     .use(url('/rest-api/login/'))
     .use(crudToHttp())
-    .use(crudlErrors)
+    .use(require('../../../crudl-admin-rest/admin/connectors/middleware/crudlErrors').default) // rest-api errors
     .use(transformData('create',
         data => ({
             requestHeaders: { "Authorization": `Token ${data.token}` },
