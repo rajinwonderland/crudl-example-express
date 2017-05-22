@@ -1,4 +1,3 @@
-import uuid from 'uuid'
 import pluralize from 'pluralize'
 
 import { createFrontendConnector, createBackendConnector } from 'crudl-connectors-base'
