@@ -1,5 +1,11 @@
 import { slugify } from '../utils'
 
+import { createResourceConnector } from '../connectors'
+
+const tagFields = '_id, name, slug'
+const tags = createResourceConnector('tags', tagFields)
+const entries = createResourceConnector('entries', '_id')
+
 //-------------------------------------------------------------------
 var listView = {
     path: 'tags',
@@ -8,15 +14,15 @@ var listView = {
         /* counting the entries requires an additional API call per row. please note that the
         number of entries could be added at the database level, removing this additional call. */
         list: function (req) {
-            return crudl.connectors.tags.read(req)
+            return tags.read(req)
             .then(res => {
-                let promises = res.data.map(item => crudl.connectors.entries.read(crudl.req().filter('tags', item._id)))
+                let promises = res.map(item => entries.read(crudl.req().filter('tags', item._id)))
                 return Promise.all(promises)
                 .then(item_entries => {
-                    return res.set('data', res.data.map((item, index) => {
-                        item.counterEntries = item_entries[index].data.length
+                    return res.map((item, index) => {
+                        item.counterEntries = item_entries[index].length
                         return item
-                    }))
+                    })
                 })
             })
 		}
@@ -64,9 +70,9 @@ var changeView = {
     path: 'tags/:_id',
     title: 'Tag',
     actions: {
-        get: function (req) { return crudl.connectors.tag(crudl.path._id).read(req) },
-        delete: function (req) { return crudl.connectors.tag(crudl.path._id).delete(req) },
-        save: function (req) { return crudl.connectors.tag(crudl.path._id).update(req) },
+        get: function (req) { return tags(crudl.path._id).read(req) },
+        delete: function (req) { return tags(crudl.path._id).delete(req) },
+        save: function (req) { return tags(crudl.path._id).update(req) },
     },
 }
 
@@ -95,7 +101,7 @@ var addView = {
     title: 'New Tag',
     fields: changeView.fields,
     actions: {
-        add: function (req) { return crudl.connectors.tags.create(req) },
+        add: function (req) { return tags.create(req) },
     },
 }
 
