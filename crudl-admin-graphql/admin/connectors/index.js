@@ -76,6 +76,25 @@ export function createResourceConnector(namePl, fields) {
         .use(continuousPagination)
 }
 
+/**
+* USAGE: const options = createOptionsConnector('section', '_id', 'name')
+* options.read() // Resolves to { options: [ { value: '...', label: '...' }, { value: '...', label: '...' }, ...] }
+*/
+export function createOptionsConnector(namePl, valueKey, labelKey) {
+    const NamePl = namePl.charAt(0).toUpperCase() + namePl.slice(1);
+
+    // e.g. '{ allSections { edges { node { value: _id, label: name } } } }'
+    readQuery = `{ all${NamePl} { edges { node { value: ${valueKey}, label: ${labelKey} } } } }`,
+    // e.g. 'allSections.edges'
+    readQueryData = `all${NamePl}.edges`
+
+    return createGraphQLConnector()
+        .use(query('read', readQuery, readQueryData))
+        .use(transformData('read', data => ({
+            options: data.map(item => item.node),
+        })))
+}
+
 export const login = createFrontendConnector(createBackendConnector())
     .use(url('/rest-api/login/'))
     .use(crudToHttp())
