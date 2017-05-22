@@ -4,7 +4,7 @@ import SplitDateTimeField from '../fields/SplitDateTimeField'
 import { createResourceConnector } from '../connectors'
 
 const userFields = '_id, username, first_name, last_name, email, is_active, is_staff, date_joined'
-const users = createResourceConnector('users', userFields)
+const users = createResourceConnector('users', userFields) 
 
 //-------------------------------------------------------------------
 var listView = {
@@ -187,7 +187,7 @@ var addView = {
     title: 'New User',
     denormalize: changeView.denormalize,
     actions: {
-        add: function (req) { return crudl.connectors.users.create(req) },
+        add: function (req) { return users.create(req) },
     },
 }
 
