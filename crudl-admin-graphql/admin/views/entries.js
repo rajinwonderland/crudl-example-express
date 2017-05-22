@@ -5,6 +5,8 @@ import { createResourceConnector, createOptionsConnector } from '../connectors'
 import continuousPagination from '../connectors/middleware/continuousPagination'
 
 const entryFields = '_id, title, status, date, sticky ' +
+                    'summary, body ' +
+                    'createdate, updatedate ' +
                     'section{_id, name}, category{_id, name}, owner{_id, username}, tags{_id}'
 const entries = createResourceConnector('entries', entryFields)
 .use(continuousPagination(20)) // page limit 20
