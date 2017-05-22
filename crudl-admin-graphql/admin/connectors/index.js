@@ -13,46 +13,65 @@ const baseURL = '/graphql-api/'
 
 // Base connector
 export function createGraphQLConnector() {
-    return createFrontendConnector(createBackendConnector(), true)
+    return createFrontendConnector(createBackendConnector())
         .use(crudToHttp({ create: 'post', read: 'post', update: 'post', delete: 'post' }))
         .use(url(baseURL))
-        .use(crudlErrors)
 }
 
-// A resource connector. Use it like this:
-// const users = createResourceConnector('users', '_id, username, email')
-//
-// users.read()                 // list
-// users.create({})             // create
-// users(id).read()             // detail
-// users(id).delete()           // delete
-// users(id).update({...})      // update
+/**
+* A resource connector. Use it like this:
+* const users = createResourceConnector('users', '_id, username, email')
+*
+* users.read()                 // list
+* users.create({...})          // create
+* users(id).read()             // detail
+* users(id).delete()           // delete
+* users(id).update({...})      // update
+*/
 export function createResourceConnector(namePl, fields) {
     const nameSg = pluralize.singular(namePl)
     const NameSg = nameSg.charAt(0).toUpperCase() + nameSg.slice(1)
 
+    //-- CREATE QUERY --
+    const createQuery = `
+    mutation ($input: ${NameSg}Input!) {
+        add${NameSg} (data: $input) {
+            errors
+            ${nameSg} { ${fields} }
+        }
+    }
+    `
+    const createQueryData = `add${NameSg}.${nameSg}`    // e.g. addUser.user
+    const createQueryError = `add${NameSg}.errors`      // e.g. addUser.errors
+
+    //-- READ QUERY --
+    const readQuery = `{ ${nameSg} (id: "%_id") {${fields}} }`
+    const readQueryData = nameSg
+
+    //-- UPDATE QUERY --
+    const updateQuery = `
+    mutation ($input: ${NameSg}Input!) {
+        change${NameSg} (id: "%_id", data: $input) {
+            errors
+            ${nameSg} {${fields}}
+        }
+    }
+    `
+    const updateQueryData = `change${NameSg}.${nameSg}`     // e.g. changeUser.user
+    const updateQueryError = `change${NameSg}.errors`       // e.g. changeUser.errors
+
+    //-- DELETE QUERY --
+    const deleteQuery = `mutation { delete${NameSg} (id: "%_id") { deleted } }`
+    const deleteQueryData = 'deleted'
+
     return createGraphQLConnector()
         .use(listQuery(namePl, fields))
-        .use(query('create', `
-            mutation ($input: ${NameSg}Input!) {
-                add${NameSg} (data: $input) {
-                    errors
-                    ${nameSg} { ${fields} }
-                }
-            }
-        `, `add${NameSg}.${nameSg}`))
-        .use(query('read', `
-            { ${nameSg} (id: "%_id") {${fields}} }
-        `, nameSg))
-        .use(query('update', `
-            mutation ($input: ${NameSg}Input!) {
-                change${NameSg} (id: "%_id", data: $input) {
-                    errors
-                    ${nameSg} {${fields}}
-                }
-            }
-        `, `change${NameSg}.${nameSg}`))
-        .use(query('delete'), `mutation { delete${NameSg} (id: "%_id") { deleted } }`, 'deleted')
+        .use(query('create', createQuery, createQueryData, createQueryError))
+        .use(query('read', readQuery, readQueryData))
+        .use(query('update', updateQuery, updateQueryData, updateQueryError))
+        .use(query('delete', deleteQuery, deleteQueryData))
+        // Transform errors
+        .use(crudlErrors)
         // Pagination must be the last one
         .use(continuousPagination)
 }

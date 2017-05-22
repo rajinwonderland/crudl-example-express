@@ -1,26 +1,16 @@
-/** middleware to transfrom express errors to crudl errors */
+/** middleware to transfrom express error to crudl error */
 export default function crudlErrors(next) {
 
-    function transformErrors(error) {
-        if (error !== null && typeof error === 'object') {
-            if (error.__all__) {
-                error._error = error.__all__
+    function processError(error) {
+        const errorObj = {}
+        if (typeof(error) === 'object' && error.length) {
+            for (let i = 0; i < error.length - 1; i = i + 2) {
+                const name = error[i] === '__all__' ? '_error' : error[i]
+                errorObj[name] = error[i + 1]
             }
+            throw { validationError: true, errors: errorObj }
         }
-        return error
-    }
-
-    function processError(response) {
-        switch (response.status) {
-            case 400:
-              throw { validationError: true, errors: transformErrors(response.data) }
-            case 401:
-              throw { authorizationError: true }
-            case 403:
-              throw { permissionError: true }
-            default:
-              throw { message: response.statusText }
-          }
+        throw error
     }
 
     return {
