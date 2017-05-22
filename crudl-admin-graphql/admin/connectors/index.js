@@ -5,7 +5,6 @@ import { createFrontendConnector, createBackendConnector } from 'crudl-connector
 import { crudToHttp, url, transformData } from 'crudl-connectors-base/lib/middleware'
 
 import crudlErrors from './middleware/crudlErrors'
-import continuousPagination from './middleware/continuousPagination'
 import listQuery from './middleware/listQuery'
 import query from './middleware/query'
 
@@ -72,8 +71,6 @@ export function createResourceConnector(namePl, fields) {
         .use(query('delete', deleteQuery, deleteQueryData))
         // Transform errors
         .use(crudlErrors)
-        // Pagination must be the last one
-        .use(continuousPagination)
 }
 
 /**
@@ -81,18 +78,9 @@ export function createResourceConnector(namePl, fields) {
 * options.read() // Resolves to { options: [ { value: '...', label: '...' }, { value: '...', label: '...' }, ...] }
 */
 export function createOptionsConnector(namePl, valueKey, labelKey) {
-    const NamePl = namePl.charAt(0).toUpperCase() + namePl.slice(1);
-
-    // e.g. '{ allSections { edges { node { value: _id, label: name } } } }'
-    const readQuery = `{ all${NamePl} { edges { node { value: ${valueKey}, label: ${labelKey} } } } }`
-    // e.g. 'allSections.edges'
-    const readQueryData = `all${NamePl}.edges`
-
     return createGraphQLConnector()
-        .use(query('read', readQuery, readQueryData))
-        .use(transformData('read', data => ({
-            options: data.map(item => item.node),
-        })))
+        .use(listQuery(namePl, `value: ${valueKey}, label: ${labelKey}`))
+        .use(transformData('read', data => ({ options: data })))
 }
 
 export const login = createFrontendConnector(createBackendConnector())
