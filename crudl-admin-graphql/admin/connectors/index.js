@@ -84,9 +84,9 @@ export function createOptionsConnector(namePl, valueKey, labelKey) {
     const NamePl = namePl.charAt(0).toUpperCase() + namePl.slice(1);
 
     // e.g. '{ allSections { edges { node { value: _id, label: name } } } }'
-    readQuery = `{ all${NamePl} { edges { node { value: ${valueKey}, label: ${labelKey} } } } }`,
+    const readQuery = `{ all${NamePl} { edges { node { value: ${valueKey}, label: ${labelKey} } } } }`
     // e.g. 'allSections.edges'
-    readQueryData = `all${NamePl}.edges`
+    const readQueryData = `all${NamePl}.edges`
 
     return createGraphQLConnector()
         .use(query('read', readQuery, readQueryData))
