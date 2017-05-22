@@ -6,9 +6,8 @@ import continuousPagination from '../connectors/middleware/continuousPagination'
 
 const entryFields = '_id, title, status, date, sticky ' +
                     'section{_id, name}, category{_id, name}, owner{_id, username}, tags{_id}'
-// Entries are paginated
 const entries = createResourceConnector('entries', entryFields)
-.use(continuousPagination(20))
+.use(continuousPagination(20)) // page limit 20
 
 const links = createResourceConnector('entryLinks', '_id, title, url, entry{_id}')
 
@@ -30,11 +29,11 @@ var listView = {
                 number of links could be added at the database level, removing this additional call. */
                 let promises = res.map(item => links.read(crudl.req().filter('entry', item._id)))
                 return Promise.all(promises)
-                .then(item_entrylinks => {
+                .then(entryLinks => {
                     res.forEach((item, index) => {
                         item.isOwner = item.owner && '_id' in item.owner ? crudl.auth.user == item.owner._id : false
                         item.counterTags = item.tags.length
-                        item.counterLinks = item_entrylinks[index].length
+                        item.counterLinks = entryLinks[index].length
                     })
                     return res
                 })
@@ -268,35 +267,11 @@ changeView.fieldsets = [
                 name: 'category',
                 getValue: select('category._id'),
                 label: 'Category',
-                field: 'Autocomplete',
+                field: 'Select',
                 required: false,
-                showAll: true,
                 helpText: 'Select a category',
                 onChange: listView.filters.fields[2].onChange,
-                actions: {
-                    select: (req) => {
-                        return Promise.all(req.data.selection.map(item => {
-                            return crudl.connectors.category(item.value).read(req)
-                            .then(res => res.set('data', {
-                                value: res.data._id,
-                                label: res.data.name,
-                            }))
-                        })).then(responses => ({ data: responses.map(r => r.data) }))
-                    },
-                    search: (req) => {
-                        if (!crudl.context.data.section) {
-                            return Promise.resolve({data: []})
-                        } else {
-                            return crudl.connectors.categories.read(req
-                                .filter('name', req.data.query)
-                                .filter('section', crudl.context.data.section))
-                            .then(res => res.set('data', res.data.map(d => ({
-                                value: d._id,
-                                label: <span><b>{d.name}</b> ({d.slug})</span>,
-                            }))))
-                        }
-                    },
-                },
+                lazy: () => categoryOptions.read(crudl.req()),
             },
         ],
     },
@@ -425,8 +400,7 @@ var addView = {
         add: function (req) { return entries.create(req) },
     },
     denormalize: (data) => {
-        /* set owner on add. alternatively, we could manipulate the data
-        with the connector by using createRequestData (see connectors.js) */
+        /* set owner on add  */
         if (crudl.auth.user) data.owner = crudl.auth.user
         return data
     }

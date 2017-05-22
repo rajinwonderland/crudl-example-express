@@ -20,9 +20,9 @@ var listView = {
             .then(res => {
                 let promises = res.map(item => entries.read(crudl.req().filter('category', item._id)))
                 return Promise.all(promises)
-                .then(item_entries => {
+                .then(itemEntries => {
                     return res.map((item, index) => {
-                        item.counterEntries = item_entries[index].length
+                        item.counterEntries = itemEntries[index].length
                         return item
                     })
                 })
