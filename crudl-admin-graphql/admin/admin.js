@@ -10,7 +10,7 @@ var connectors = require('./connectors/connectors')
 var { login, logout } = require('./auth')
 
 const OPTIONS = {
-    debug: true,
+    debug: false,
     basePath: '/crudl-graphql/',
     baseURL: '/graphql-api/',
 }

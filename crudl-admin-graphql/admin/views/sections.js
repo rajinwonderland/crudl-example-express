@@ -1,6 +1,12 @@
 import { slugify } from '../utils'
 import React from 'react'
 
+import { createResourceConnector } from '../connectors'
+
+const sectionFields = '_id, name, slug, position'
+const sections = createResourceConnector('sections', sectionFields)
+const entries = createResourceConnector('entries', '_id')
+
 //-------------------------------------------------------------------
 var listView = {
     path: 'sections',
@@ -9,15 +15,15 @@ var listView = {
         /* counting the entries requires an additional API call per row. please note that the
         number of entries could be added at the database level, removing this additional call. */
         list: function (req) {
-            return crudl.connectors.sections.read(req)
+            return sections.read(req)
             .then(res => {
-                let promises = res.data.map(item => crudl.connectors.entries.read(crudl.req().filter('section', item._id)))
+                let promises = res.map(item => entries.read(crudl.req().filter('section', item._id)))
                 return Promise.all(promises)
-                .then(item_entries => {
-                    return res.set('data', res.data.map((item, index) => {
-                        item.counterEntries = item_entries[index].data.length
+                .then(itemEntries => {
+                    return res.map((item, index) => {
+                        item.counterEntries = itemEntries[index].length
                         return item
-                    }))
+                    })
                 })
             })
 		}
@@ -54,9 +60,9 @@ var changeView = {
     path: 'sections/:_id',
     title: 'Section',
     actions: {
-        get: function (req) { return crudl.connectors.section(crudl.path._id).read(req) },
-        delete: function (req) { return crudl.connectors.section(crudl.path._id).delete(req) },
-        save: function (req) { return crudl.connectors.section(crudl.path._id).update(req) },
+        get: function (req) { return sections(crudl.path._id).read(req) },
+        delete: function (req) { return sections(crudl.path._id).delete(req) },
+        save: function (req) { return sections(crudl.path._id).update(req) },
     },
 }
 
@@ -86,7 +92,7 @@ var addView = {
     title: 'New Section',
     fields: changeView.fields,
     actions: {
-        add: function (req) { return crudl.connectors.sections.create(req) },
+        add: function (req) { return sections.create(req) },
     },
 }
 
