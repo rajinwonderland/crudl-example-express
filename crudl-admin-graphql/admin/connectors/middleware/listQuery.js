@@ -28,7 +28,8 @@ function buildQueryString(req, options) {
         options.args,
         req.page,
         req.filters,
-        buildOrderBy(req)
+        buildOrderBy(req),
+        req.args
     ))
     return `{
         ${options.name} ${args} {
@@ -39,15 +40,9 @@ function buildQueryString(req, options) {
     }`
 }
 
-const defaultArgs = { first: 20 };
-
 export default function createListQuery(namePl, fields, args) {
     const NamePl = namePl.charAt(0).toUpperCase() + namePl.slice(1);
-    const options = {
-        name: `all${NamePl}`,
-        fields,
-        args: Object.assign({}, defaultArgs, args)
-    }
+    const options = { name: `all${NamePl}`, fields, args }
 
     return function listQuery(next) {
         return {
@@ -60,7 +55,10 @@ export default function createListQuery(namePl, fields, args) {
                 req.data = { query: buildQueryString(req, options) }
 
                 return next.read(req).then((res) => {
-                    res.data = res.data.data[options.name]
+                    const { totalCount, filteredCount, pageInfo, edges } = res.data.data[options.name]
+                    // Split pagination from data
+                    res.pagination = { totalCount, filteredCount, pageInfo }
+                    res.data = edges.map(item => item.node)
                     return res
                 })
             }

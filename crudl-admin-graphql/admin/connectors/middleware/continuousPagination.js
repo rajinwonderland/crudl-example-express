@@ -11,15 +11,19 @@ function getInfo(data) {
     }
 }
 
-export default function continuousPagination(next) {
-    return {
-        read: req => next.read(req).then((res) => {
-            if (res.data.pageInfo) {
-                const paginationDescriptor = getInfo(res.data);
-                res.data = res.data.edges.map(edge => edge.node);
-                res.data.pagination = paginationDescriptor;
+export default function continuousPagination(first = 20) {
+    return function continuousPaginationMiddleware(next) {
+        return {
+            read: function (req) {
+                req.args = { first }
+                return next.read(req)
+                .then((res) => {
+                    if (res.pagination) {
+                        res.data.pagination = getInfo(res.pagination)
+                    }
+                    return res;
+                })
             }
-            return res;
-        }),
-    };
+        };
+    }
 }
