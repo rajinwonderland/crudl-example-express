@@ -1,9 +1,11 @@
 import { slugify } from '../utils'
 
 import { createResourceConnector } from '../connectors'
+import continuousPagination from '../connectors/middleware/continuousPagination'
 
 const tagFields = '_id, name, slug'
 const tags = createResourceConnector('tags', tagFields)
+.use(continuousPagination(20))
 const entries = createResourceConnector('entries', '_id')
 
 //-------------------------------------------------------------------
@@ -19,10 +21,10 @@ var listView = {
                 let promises = res.map(item => entries.read(crudl.req().filter('tags', item._id)))
                 return Promise.all(promises)
                 .then(item_entries => {
-                    return res.map((item, index) => {
+                    res.forEach((item, index) => {
                         item.counterEntries = item_entries[index].length
-                        return item
                     })
+                    return res
                 })
             })
 		}

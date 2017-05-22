@@ -4,7 +4,7 @@ import SplitDateTimeField from '../fields/SplitDateTimeField'
 import { createResourceConnector } from '../connectors'
 
 const userFields = '_id, username, first_name, last_name, email, is_active, is_staff, date_joined'
-const users = createResourceConnector('users', userFields) 
+const users = createResourceConnector('users', userFields)
 
 //-------------------------------------------------------------------
 var listView = {

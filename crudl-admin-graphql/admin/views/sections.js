@@ -20,10 +20,10 @@ var listView = {
                 let promises = res.map(item => entries.read(crudl.req().filter('section', item._id)))
                 return Promise.all(promises)
                 .then(itemEntries => {
-                    return res.map((item, index) => {
+                    res.forEach((item, index) => {
                         item.counterEntries = itemEntries[index].length
-                        return item
                     })
+                    return res
                 })
             })
 		}
