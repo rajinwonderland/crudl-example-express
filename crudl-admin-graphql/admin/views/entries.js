@@ -1,11 +1,22 @@
 import { formatDate, formatStringToDate, select } from '../utils'
 import React from 'react'
 
-function transform(p, func) {
-    return p.then(response => {
-        return response.set('data', response.data.map(func))
-    })
-}
+import { createResourceConnector, createOptionsConnector } from '../connectors'
+import continuousPagination from '../connectors/middleware/continuousPagination'
+
+const entryFields = '_id, title, status, date, sticky ' +
+                    'section{_id, name}, category{_id, name}, owner{_id, username}, tags{_id}'
+// Entries are paginated
+const entries = createResourceConnector('entries', entryFields)
+.use(continuousPagination(20))
+
+const links = createResourceConnector('entryLinks', '_id, title, url, entry{_id}')
+
+const tags = createResourceConnector('tags', '_id, name')
+
+const sectionOptions = createOptionsConnector('sections', '_id', 'name')
+const categoryOptions = createOptionsConnector('categories', '_id', 'name')
+const tagsOptions = createOptionsConnector('tags', '_id', 'name')
 
 //-------------------------------------------------------------------
 var listView = {
@@ -13,20 +24,19 @@ var listView = {
     title: 'Blog Entries',
     actions: {
         list: function (req) {
-            return crudl.connectors.entries.read(req)
+            return entries.read(req)
             .then(res => {
                 /* counting the links requires an additional API call per row. please note that the
                 number of links could be added at the database level, removing this additional call. */
-                let promises = res.data.map(item => crudl.connectors.links.read(crudl.req().filter('entry', item._id)))
+                let promises = res.map(item => links.read(crudl.req().filter('entry', item._id)))
                 return Promise.all(promises)
                 .then(item_entrylinks => {
-                    return res.set('data', res.data.map((item, index) => {
-                        item.isOwner = false
-                        if (item.owner && '_id' in item.owner) item.isOwner = crudl.auth.user == item.owner._id
+                    res.forEach((item, index) => {
+                        item.isOwner = item.owner && '_id' in item.owner ? crudl.auth.user == item.owner._id : false
                         item.counterTags = item.tags.length
-                        item.counterLinks = item_entrylinks[index].data.length
-                        return item
-                    }))
+                        item.counterLinks = item_entrylinks[index].length
+                    })
+                    return res
                 })
             })
         }
@@ -109,7 +119,7 @@ listView.filters = {
             name: 'section',
             label: 'Section',
             field: 'Select',
-            lazy: () => crudl.connectors.sections_options.read(crudl.req()).then(res => res.data),
+            lazy: () => sectionOptions.read(crudl.req()),
         },
         {
             name: 'category',
@@ -129,13 +139,13 @@ listView.filters = {
                             }
                         }
                         // Get the catogories options filtered by section
-                        return crudl.connectors.categories_options.read(crudl.req().filter('section', section.value))
+                        return categoryOptions.read(crudl.req().filter('section', section.value))
                         .then(res => {
-                            if (res.data.options.length > 0) {
+                            if (res.options.length > 0) {
                                 return {
                                     readOnly: false,
                                     helpText: 'Select a category',
-                                    ...res.data,
+                                    ...res,
                                 }
                             } else {
                                 return {
@@ -194,9 +204,9 @@ var changeView = {
     title: 'Blog Entry',
     tabtitle: 'Main',
     actions: {
-        get: function (req) { return crudl.connectors.entry(crudl.path._id).read(req) },
-        delete: function (req) { return crudl.connectors.entry(crudl.path._id).delete(req) },
-        save: function (req) { return crudl.connectors.entry(crudl.path._id).update(req) },
+        get: function (req) { return entries(crudl.path._id).read(req) },
+        delete: function (req) { return entries(crudl.path._id).delete(req) },
+        save: function (req) { return entries(crudl.path._id).update(req) },
     },
     normalize: (get) => {
         get.date = formatStringToDate(get.date)
@@ -221,7 +231,7 @@ changeView.fieldsets = [
         fields: [
             {
                 name: '_id',
-                field: 'hidden',
+                hidden: true,
             },
             {
                 name: 'title',
@@ -249,9 +259,9 @@ changeView.fieldsets = [
                 /* we set required to false, although this field is actually
                 required with the API. */
                 required: false,
-                lazy: () => crudl.connectors.sections_options.read(crudl.req()).then(res => ({
+                lazy: () => sectionOptions.read(crudl.req()).then(res => ({
                     helpText: 'Select a section',
-                    ...res.data
+                    ...res,
                 }))
             },
             {
@@ -337,18 +347,14 @@ changeView.fieldsets = [
                 helpText: 'Select a tag',
                 actions: {
                     search: (req) => {
-                        return crudl.connectors.tags_options.read(req.filter('name', req.data.query.toLowerCase()))
-                        .then(res => res.set('data', res.data.options))
+                        return tagsOptions.read(req.filter('name', req.data.query.toLowerCase()))
+                        .then(({ options }) => options)
                     },
-                    select: (req) => {
-                        return Promise.all(req.data.selection.map(item => {
-                            return crudl.connectors.tag(item.value).read(req)
-                            .then(res => res.set('data', {
-                                value: res.data._id,
-                                label: res.data.name,
-                            }))
-                        })).then(responses => ({ data: responses.map(r => r.data) }))
-                    },
+                    select: (req) => Promise.all(req.data.selection.map(
+                        item => tags(item.value).read(crudl.req()).then(
+                            tag => ({ value: tag._id, label: tag.name, })
+                        )
+                    )),
                 },
             }
         ]
@@ -377,10 +383,10 @@ changeView.tabs = [
     {
         title: 'Links',
         actions: {
-            list: (req) => crudl.connectors.links.read(req.filter('entry', crudl.path._id)),
-            add: (req) => crudl.connectors.links.create(req),
-            save: (req) => crudl.connectors.link(req.data._id).update(req),
-            delete: (req) => crudl.connectors.link(req.data._id).delete(req)
+            list: (req) => links.read(req.filter('entry', crudl.path._id)),
+            add: (req) => links.create(req),
+            save: (req) => links(req.data._id).update(req),
+            delete: (req) => links(req.data._id).delete(req)
         },
         itemTitle: '{url}',
         fields: [
@@ -397,12 +403,12 @@ changeView.tabs = [
             },
             {
                 name: '_id',
-                field: 'hidden',
+                hidden: true,
             },
             {
                 name: 'entry',
                 getValue: select('entry._id'),
-                field: 'hidden',
+                hidden: true,
                 initialValue: () => crudl.context.data._id
             },
         ],
@@ -416,7 +422,7 @@ var addView = {
     fieldsets: changeView.fieldsets,
     validate: changeView.validate,
     actions: {
-        add: function (req) { return crudl.connectors.entries.create(req) },
+        add: function (req) { return entries.create(req) },
     },
     denormalize: (data) => {
         /* set owner on add. alternatively, we could manipulate the data
