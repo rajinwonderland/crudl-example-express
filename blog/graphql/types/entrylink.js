@@ -72,7 +72,7 @@ let EntryLinkResultType = new GraphQLObjectType({
         errors: {
             type: new GraphQLList(GraphQLString),
         },
-        entrylink: {
+        entryLink: {
             type: EntryLinkType
         }
     })
@@ -84,7 +84,7 @@ let EntryLinkDeleteType = new GraphQLObjectType({
         deleted: {
             type: GraphQLBoolean
         },
-        entrylink: {
+        entryLink: {
             type: EntryLinkType
         }
     })

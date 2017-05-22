@@ -258,7 +258,7 @@ let schema = new GraphQLSchema({
                     })
                 }
             },
-            entrylink: {
+            entryLink: {
                 type: EntryLinkType,
                 args: { id: { type: GraphQLID } },
                 resolve: (root, {id}) => db.models.EntryLink.findById(id)
@@ -535,7 +535,7 @@ let schema = new GraphQLSchema({
                 args: { data: { name: 'data', type: new GraphQLNonNull(EntryLinkInputType) }},
                 resolve: (root, {data}) => {
                     return db.models.EntryLink.create(data)
-                    .then((function(object) { return { nores, entrylink: object } }), function(err) {
+                    .then((function(object) { return { nores, entryLink: object } }), function(err) {
                         let errors = getErrors(err)
                         return { errors, nores }
                     })
@@ -549,7 +549,7 @@ let schema = new GraphQLSchema({
                 },
                 resolve: (root, {id, data}) => {
                     return db.models.EntryLink.findByIdAndUpdate(id, data, { runValidators: true, new: true  })
-                    .then((function(object) { return { nores, entrylink: object } }), function(err) {
+                    .then((function(object) { return { nores, entryLink: object } }), function(err) {
                         let errors = getErrors(err)
                         return { errors, nores }
                     })
@@ -560,8 +560,8 @@ let schema = new GraphQLSchema({
                 args: { id: { name: 'id', type: new GraphQLNonNull(GraphQLID) }},
                 resolve: (root, {id}) => {
                     return db.models.EntryLink.findByIdAndRemove(id)
-                    .then((function(object) { return { deleted: true, entrylink: object } }), function(err) {
-                        return { deleted: false, entrylink: object }
+                    .then((function(object) { return { deleted: true, entryLink: object } }), function(err) {
+                        return { deleted: false, entryLink: object }
                     })
                 }
             },
