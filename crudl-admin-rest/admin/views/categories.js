@@ -41,7 +41,9 @@ var listView = {
                 labelConfirm: "Delete All",
             },
             action: selection => Promise.all(selection.map(
-                item => category(item._id).delete(crudl.req())
+                item => category(item._id).delete(crudl.req()).then(
+                    () => crudl.successMessage(`Deleted ${selection.length} items.`)
+                )
             ))
         },
         changeSection: {
