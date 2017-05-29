@@ -6,7 +6,6 @@ var sections = require('./views/sections')
 var categories = require('./views/categories')
 var tags = require('./views/tags')
 var entries = require('./views/entries')
-var connectors = require('./connectors/connectors')
 var { login, logout } = require('./auth')
 
 const OPTIONS = {

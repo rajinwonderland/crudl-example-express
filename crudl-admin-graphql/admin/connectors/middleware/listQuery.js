@@ -10,7 +10,7 @@ function buildOrderBy(req) {
     if (req.sorting && req.sorting.length > 0) {
         return {
             orderBy: req.sorting.map(field => {
-                let prefix = field.sorted == 'ascending' ? '' : '-'
+                let prefix = field.sorted === 'ascending' ? '' : '-'
                 return prefix + field.sortKey
             }).join(',')
         }
@@ -40,11 +40,22 @@ function buildQueryString(req, options) {
     }`
 }
 
-export default function createListQuery(namePl, fields, args) {
+/**
+* Use it like this:
+*   const users = createGraphQLConnector().use(listQuery('users', 'id, username, email'))
+*   users.read() // resolves to [ {id: '1', username: 'joe', email: 'joe@xyz.com' }, {...}, ... ]
+*
+* The list query does not require any parameters. So you can overload a connector with another read query:
+*   users.use(query('read', '{ user (id: "%id") {id, username, email} }'))
+*
+* then you can do: `users.read()` to obtain a list of all users and `users(1).read()` to get the detail
+* info of user with the id '1'
+*/
+export default function listQuery(namePl, fields, args) {
     const NamePl = namePl.charAt(0).toUpperCase() + namePl.slice(1);
     const options = { name: `all${NamePl}`, fields, args }
 
-    return function listQuery(next) {
+    return function listQueryMiddleware(next) {
         return {
             read: function (req) {
                 if (req.resolved) {
