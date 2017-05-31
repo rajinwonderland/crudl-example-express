@@ -113,31 +113,7 @@ In order for CRUDL to work, you mainly need to define _connectors_ and _views_.
 ### Connectors
 The _connectors_ provide the views with a unified access to different APIs like REST or GraphQL. Each _connector_ usually represents a single API endpoint (or query) and implements the CRUD methods (create, read, update, delete). Moreover, the _connector_ handles pagination and transforms the request/response.
 
-Here is the basic structure of a REST connector:
-```javascript
-{
-    id: 'entries',
-    url: 'entries/',
-    pagination: numberedPagination,
-    transform: {
-        readResponseData: data => data.docs,
-    },
-},
-```
-
-And here is a similar connector with GraphQL:
-```javascript
-{
-    id: 'entries',
-    query: {
-        read: `{allEntries{id, title, status, date}}`,
-    },
-    pagination: continuousPagination,
-    transform: {
-        readResponseData: data => data.data.allEntries.edges.map(e => e.node)
-    },
-},
-```
+There is a npm package implementing general connectors [crudl-connectors-base](https://github.com/crudlio/crudl-connectors-base) that can be extended (using middleware) to fit your particular needs.
 
 ### Views
 With views, you create the visual representation by defining the _listView_, _changeView_ and _addView_ options:
@@ -148,7 +124,7 @@ var listView = {
     path: "",
     title: "",
     actions: {
-        list: function (req) { return crudl.connectors.entries.read(req) }
+        list: entries.read,
     }
     fields: [],
     // Optional
@@ -161,9 +137,9 @@ var changeView = {
     path: "",
     title: "",
     actions: {
-        get: function (req) { return crudl.connectors.entries(crudl.path.id).read(req) },
-        delete: function (req) { return crudl.connectors.entries(crudl.path.id).delete(req) },
-        save: function (req) { return crudl.connectors.entries(crudl.path.id).update(req) },
+        get: req => entry(crudl.path._id).read(req),
+        save: req => entry(crudl.path._id).update(req),
+        delete: req => entry(crudl.path._id).delete(req),
     },
     // Either fields or fieldsets
     fields: [],
@@ -211,13 +187,20 @@ With _Entries_, the _Categories_ depend on the selected _Section_. If you change
                     }
                 }
                 // Get the catogories options filtered by section
-                return crudl.connectors.categories_options.read(crudl.req()
-                .filter('section', section.value))
-                .then(res => {
-                    return {
-                        readOnly: false,
-                        helpText: 'Select a category',
-                        ...res.data,
+                return options('categories', '_id', 'name')
+                .read(crudl.req().filter('section', section.value))
+                .then(({ options }) => {
+                    if (options.length > 0) {
+                        return {
+                            readOnly: false,
+                            helpText: 'Select a category',
+                            options,
+                        }
+                    } else {
+                        return {
+                            readOnly: true,
+                            helpText: 'No categories available for the selected section.'
+                        }
                     }
                 })
             }
@@ -231,28 +214,25 @@ You can use the same syntax with list filters (see entries.js).
 ### Foreign Key, Many-to-Many
 There are a couple of foreign keys being used (e.g. _Section_ or _Category_ with _Entry_) and one many-to-many field (_Tags_ with _Entry_).
 
-```javascript
+```js
 {
     name: 'section',
     label: 'Section',
     field: 'Select',
-    props: () => crudl.connectors.sections_options.read(crudl.req()).then(res => res.data),
+    lazy: () => options('sections', '_id', 'name').read(crudl.req()),
 },
 {
     name: 'category',
     label: 'Category',
     field: 'Autocomplete',
     actions: {
-        select: (req) => {
-            return crudl.connectors.categories_options.read(req
-            .filter('idIn', req.data.selection.map(item => item.value).toString()))
-            .then(res => res.setData(res.data.options))
-        },
+        select: req => options('categories', '_id', 'name')
+            .read(req.filter('idIn', req.data.selection.map(item => item.value).toString()))
+            .then(({ options }) => options),
         search: (req) => {
-            return crudl.connectors.categories.read(req
-            .filter('name', req.data.query)
-            .filter('section', crudl.context.data.section))
-            .then(res => res.setData(res.data.options))
+            return options('categories', '_id', 'name')
+            .read(req.filter('name', req.data.query).filter('section', crudl.context('section')))
+            .then(({ options }) => options)
         },
     },
 },
@@ -260,7 +240,21 @@ There are a couple of foreign keys being used (e.g. _Section_ or _Category_ with
     name: 'tags',
     label: 'Tags',
     field: 'AutocompleteMultiple',
-    actions: {},
+    required: false,
+    showAll: false,
+    helpText: 'Select a tag',
+    actions: {
+        search: (req) => {
+            return options('tags', '_id', 'name')
+            .read(req.filter('name', req.data.query.toLowerCase()))
+            .then(({ options }) => options)
+        },
+        select: (req) => {
+            return options('tags', '_id', 'name')
+            .read(req.filter('idIn', req.data.selection.map(item => item.value).toString()))
+            .then(({ options }) => options)
+        },
+    },
 }
 ```
 
@@ -272,10 +266,10 @@ changeView.tabs = [
     {
         title: 'Links',
         actions: {
-            list: (req) => crudl.connectors.links.read(req.filter('entry', crudl.path._id)),
-            add: (req) => crudl.connectors.links.create(req),
-            save: (req) => crudl.connectors.link(req.data._id).update(req),
-            delete: (req) => crudl.connectors.link(req.data._id).delete(req)
+            list: req => links.read(req.filter('entry', crudl.path._id)),
+            add: req => links.create(req),
+            save: req => link(req.data._id).update(req),
+            delete: req => link(req.data._id).delete(req),
         },
         itemTitle: '{url}',
         fields: [
@@ -393,7 +387,7 @@ In order to validate the complete form, you define a function _validate_ with th
 
 ```javascript
 var changeView = {
-    path: 'entries/:id',
+    path: 'entries/:_id',
     title: 'Blog Entry',
     actions: { ... },
     validate: function (values) {
@@ -412,15 +406,11 @@ var listView = {
     path: 'entries',
     title: 'Blog Entries',
     actions: {
-        list: function (req) {
-            let entries = crudl.connectors.entries.read(req)
-            /* here we add a custom column based on the currently logged-in user */
-            let entriesWithCustomColumn = transform(entries, (item) => {
-                item.is_owner = crudl.auth.user == item.owner
-                return item
-            })
-            return entriesWithCustomColumn
-        }
+        /* here we add a custom column based on the currently logged-in user */
+        list: req => entries.read(req).then(results => results.map(item => {
+            item.is_owner = crudl.auth.user === item.owner
+            return item
+        }))
     },
 }
 
