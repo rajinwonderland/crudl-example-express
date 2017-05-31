@@ -121,10 +121,10 @@ With views, you create the visual representation by defining the _listView_, _ch
 ```javascript
 var listView = {
     // Required
-    path: "",
-    title: "",
+    path: "api/path/to/collection",
+    title: "Collection Name",
     actions: {
-        list: entries.read,
+        list: listConnector.read,
     }
     fields: [],
     // Optional
@@ -134,12 +134,12 @@ var listView = {
 
 var changeView = {
     // Required
-    path: "",
-    title: "",
+    path: "api/path/to/collection/:_id",
+    title: "Detail Name",
     actions: {
-        get: req => entry(crudl.path._id).read(req),
-        save: req => entry(crudl.path._id).update(req),
-        delete: req => entry(crudl.path._id).delete(req),
+        get: req => detailConnector(crudl.path._id).read(req),
+        save: req => detailConnector(crudl.path._id).update(req),
+        delete: req => detailConnector(crudl.path._id).delete(req),
     },
     // Either fields or fieldsets
     fields: [],
@@ -155,18 +155,15 @@ var changeView = {
 ### Authentication
 Both the REST and GraphQL API is only accessible for logged-in users based on TokenAuthentication. Besides the Token, we also return an attribute _info_ in order to subsequently have access to the currently logged-in user (e.g. for filtering). The _info_ is exposed in the global variable `crudl.auth`.
 
-```javascript
-{
-    id: 'login',
-    url: 'login/',
-    mapping: { read: 'post', },
-    transform: {
-        readResponseData: data => ({
-            requestHeaders: { 'Authorization': `Token ${data.token}` },
+The REST login [connector](crudl-admin-rest/admin/connectors/index.js) looks like this:
+```js
+const login = createExpressConnector('login/')
+    .use(transformData('create',
+        data => ({
+            requestHeaders: { "Authorization": `Token ${data.token}` },
             info: data,
         })
-    }
-}
+    ))
 ```
 
 ### Field dependency
