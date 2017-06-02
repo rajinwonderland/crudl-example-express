@@ -263,20 +263,18 @@ changeView.tabs = [
     {
         title: 'Links',
         actions: {
-            list: req => links.read(req.filter('entry', crudl.path._id)),
-            add: req => links.create(req),
-            save: req => link(req.data._id).update(req),
-            delete: req => link(req.data._id).delete(req),
+            list: (req) => links.read(req.filter('entry', crudl.path._id)),
+            add: (req) => links.create(req),
+            save: (req) => link(req.data._id).update(req),
+            delete: (req) => link(req.data._id).delete(req)
         },
-        itemTitle: '{url}',
+        getItemTitle: (data) => `${data.url} (${data.title})`,
         fields: [
             {
                 name: 'url',
                 label: 'URL',
                 field: 'URL',
-                props: {
-                    link: true,
-                },
+                link: true,
             },
             {
                 name: 'title',
@@ -285,17 +283,21 @@ changeView.tabs = [
             },
             {
                 name: '_id',
-                field: 'hidden',
+                hidden: true,
             },
             {
                 name: 'entry',
-                field: 'hidden',
+                hidden: true,
                 initialValue: () => crudl.context.data._id,
             },
         ],
     },
 ]
 ```
+- The actions `list`, `add`, `save` and `delete` follow the same logic as the corresponding actions of list, change and add views.
+- `getItemTitle: (data) => <string>` defines the displayed title of the item form. If it is not provided, then the value of the first field is used (in this case it would be the URL value).
+- It's typical for the tab views to make use of hidden fields to include the related object's id in the form data.
+
 
 ### Normalize/denormalize
 With _Entries_, we set the owner to the currently logged-in user with denormalize:
