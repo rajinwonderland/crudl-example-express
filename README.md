@@ -324,16 +324,17 @@ var listView = {
 }
 ```
 
-### Custom components
-We have added a custom component _SplitDateTimeField.jsx_ (see admin/fields) in order to show how you're able to implement fields which are not part of the core package.
-
-```javascript
-import options from './admin/options'
-import descriptor from './admin/descriptor'
-import SplitDateTimeField from './admin/fields/SplitDateTimeField'
-
-crudl.addField('SplitDateTime', SplitDateTimeField)
-crudl.render(descriptor, options)
+### Custom field components
+We have added a custom component _SplitDateTimeField.jsx_ (see admin/fields) in order to show how you're able to implement fields which are not part of the core package. Usage example:
+```js
+// See users.js (in both examples)
+{
+    name: 'date_joined',
+    label: 'Date joined',
+    field: SplitDateTimeField,  // Custom component
+    getTime: (date) => {...},   // getTime is a required prop of SplitDateTimeField
+    getDate: (date) => {...},   // getDate is a required prop of SplitDateTimeField
+},
 ```
 
 ### Initial values
