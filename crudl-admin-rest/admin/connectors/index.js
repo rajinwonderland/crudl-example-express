@@ -1,5 +1,5 @@
-import { createFrontendConnector, createBackendConnector } from 'crudl-connectors-base'
-import { crudToHttp, url, transformData } from 'crudl-connectors-base/lib/middleware'
+import { createFrontendConnector, createBackendConnector } from '@crudlio/crudl-connectors-base'
+import { crudToHttp, url, transformData } from '@crudlio/crudl-connectors-base/lib/middleware'
 
 import crudlErrors from './middleware/crudlErrors'
 import numberedPagination from './middleware/numberedPagination'
