@@ -32,47 +32,47 @@ var listView = {
             })
 		}
     },
-    bulkActions: {
-        delete: {
-            description: 'Delete selected',
-            modalConfirm: {
-                message: "All the selected items will be deleted. This action cannot be reversed!",
-                modalType: 'modal-delete',
-                labelConfirm: "Delete All",
-            },
-            action: selection => Promise.all(selection.map(
-                item => category(item._id).delete(crudl.req()).then(
-                    () => crudl.successMessage(`Deleted ${selection.length} items.`)
-                )
-            ))
-        },
-        changeSection: {
-            description: 'Change Section',
-            before: (selection) => ({ onProceed, onCancel }) => (
-                <div>
-                    {crudl.createForm({
-                        id: 'select-section',
-                        title: 'Select Section',
-                        fields: [{
-                            name: 'section',
-                            label: 'Section',
-                            field: 'Select',
-                            lazy: () => options('sections', '_id', 'name').read(crudl.req()),
-                        }],
-                        onSubmit: values => onProceed(
-                            selection.map(s => Object.assign({}, s, { section: values.section }))
-                        ),
-                        onCancel,
-                    })}
-                </div>
-            ),
-            action: (selection) => {
-                return Promise.all(selection.map(
-                    item => category(item._id).update(crudl.req(item)))
-                ).then(() => crudl.successMessage('Successfully changed the sections'))
-            },
-        },
-    },
+    // bulkActions: {
+    //     delete: {
+    //         description: 'Delete selected',
+    //         modalConfirm: {
+    //             message: "All the selected items will be deleted. This action cannot be reversed!",
+    //             modalType: 'modal-delete',
+    //             labelConfirm: "Delete All",
+    //         },
+    //         action: selection => Promise.all(selection.map(
+    //             item => category(item._id).delete(crudl.req()).then(
+    //                 () => crudl.successMessage(`Deleted ${selection.length} items.`)
+    //             )
+    //         ))
+    //     },
+    //     changeSection: {
+    //         description: 'Change Section',
+    //         before: (selection) => ({ onProceed, onCancel }) => (
+    //             <div>
+    //                 {crudl.createForm({
+    //                     id: 'select-section',
+    //                     title: 'Select Section',
+    //                     fields: [{
+    //                         name: 'section',
+    //                         label: 'Section',
+    //                         field: 'Select',
+    //                         lazy: () => options('sections', '_id', 'name').read(crudl.req()),
+    //                     }],
+    //                     onSubmit: values => onProceed(
+    //                         selection.map(s => Object.assign({}, s, { section: values.section }))
+    //                     ),
+    //                     onCancel,
+    //                 })}
+    //             </div>
+    //         ),
+    //         action: (selection) => {
+    //             return Promise.all(selection.map(
+    //                 item => category(item._id).update(crudl.req(item)))
+    //             ).then(() => crudl.successMessage('Successfully changed the sections'))
+    //         },
+    //     },
+    // },
 }
 
 listView.fields = [
@@ -144,57 +144,57 @@ changeView.fields = [
         field: 'Select',
         required: true,
         lazy: () => options('sections', '_id', 'name').read(crudl.req()),
-        add: {
-            title: 'New section',
-            actions: {
-                add: req => sections.create(req).then(data => data._id),
-            },
-            fields: [
-                {
-                    name: 'name',
-                    label: 'Name',
-                    field: 'String',
-                    required: true
-                },
-                {
-                    name: 'slug',
-                    label: 'Slug',
-                    field: 'String',
-                    onChange: {
-                        in: 'name',
-                        setInitialValue: (name) => slugify(name.value),
-                    },
-                    helpText: <span>If left blank, the slug will be automatically generated.
-                    More about slugs <a href="http://en.wikipedia.org/wiki/Slug" target="_blank">here</a>.</span>,
-                },
-            ],
-        },
-        edit: {
-            title: 'Section',
-            actions: {
-                get: (req) => section(crudl.context('section')).read(req),
-                save: (req) => section(crudl.context('section')).update(req).then(data => data._id),
-            },
-            fields: [
-                {
-                    name: 'name',
-                    label: 'Name',
-                    field: 'String',
-                    required: true
-                },
-                {
-                    name: 'slug',
-                    label: 'Slug',
-                    field: 'String',
-                    onChange: {
-                        in: 'name',
-                        setInitialValue: (name) => slugify(name.value),
-                    },
-                    helpText: <span>If left blank, the slug will be automatically generated.
-                    More about slugs <a href="http://en.wikipedia.org/wiki/Slug" target="_blank">here</a>.</span>,
-                },
-            ],
-        },
+        // add: {
+        //     title: 'New section',
+        //     actions: {
+        //         add: req => sections.create(req).then(data => data._id),
+        //     },
+        //     fields: [
+        //         {
+        //             name: 'name',
+        //             label: 'Name',
+        //             field: 'String',
+        //             required: true
+        //         },
+        //         {
+        //             name: 'slug',
+        //             label: 'Slug',
+        //             field: 'String',
+        //             onChange: {
+        //                 in: 'name',
+        //                 setInitialValue: (name) => slugify(name.value),
+        //             },
+        //             helpText: <span>If left blank, the slug will be automatically generated.
+        //             More about slugs <a href="http://en.wikipedia.org/wiki/Slug" target="_blank">here</a>.</span>,
+        //         },
+        //     ],
+        // },
+        // edit: {
+        //     title: 'Section',
+        //     actions: {
+        //         get: (req) => section(crudl.context('section')).read(req),
+        //         save: (req) => section(crudl.context('section')).update(req).then(data => data._id),
+        //     },
+        //     fields: [
+        //         {
+        //             name: 'name',
+        //             label: 'Name',
+        //             field: 'String',
+        //             required: true
+        //         },
+        //         {
+        //             name: 'slug',
+        //             label: 'Slug',
+        //             field: 'String',
+        //             onChange: {
+        //                 in: 'name',
+        //                 setInitialValue: (name) => slugify(name.value),
+        //             },
+        //             helpText: <span>If left blank, the slug will be automatically generated.
+        //             More about slugs <a href="http://en.wikipedia.org/wiki/Slug" target="_blank">here</a>.</span>,
+        //         },
+        //     ],
+        // },
     },
     {
         name: 'name',
